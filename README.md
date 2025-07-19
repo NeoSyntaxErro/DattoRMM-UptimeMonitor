@@ -29,7 +29,7 @@ This PowerShell script is designed to run once daily as an RMM (Remote Monitorin
    - Calculates the total uptime in days.
 
 3. **Reboot Scheduling**
-   - If uptime exceeds **5 days**, it attempts to schedule a reboot at **2:30 AM** using `schtasks`.
+   - If uptime exceeds **5 days**, it attempts to schedule a reboot at **23:30 PM** using `schtasks`.
    - If task registration fails, it outputs a status of `COMP ERROR` and exits with `1`.
    - If successful, it outputs `STATUS=EXCEEDED` and exits with `0`.
 
