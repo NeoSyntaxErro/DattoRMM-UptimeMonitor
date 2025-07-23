@@ -30,28 +30,37 @@ if ($existingTask) {
         exit 0
     } else {
         Unregister-ScheduledTask -TaskPath "\" -TaskName "Routine Reboot" -Confirm:$false -ErrorAction SilentlyContinue
-    }
-}
-
-if ($UptimeDays -gt 5) {
-    schtasks.exe /Create /SC ONCE /TN "Routine Reboot" /TR "shutdown /r /f /t 0" /ST 23:30 /RU "SYSTEM" /F
-    $exitCode = $LASTEXITCODE
-
-    if ($exitCode -ne 0) {
-        Write-Host '<-Start Result->'
-        Write-Host 'STATUS=COMP ERROR'
-        Write-Host '<-End Result->'
-        exit 1
-    } else {
-        Write-Host '<-Start Result->'
-        Write-Host 'STATUS=EXCEEDED'
-        Write-Host '<-End Result->'
-        exit 0
+        if (-not(&?)) {
+            Write-Host "<-Start Result->"
+            Write-Host "STATUS=COMP ERR"
+            Write-Host "<-End Result->"
+            exit 1
+        } else {
+            Write-Host "<-Start Result->"
+            Write-Host "STATUS=$UptimeDays"
+            Write-Host "<-End Result->"
+            exit 0
+        }
     }
 } else {
-    Write-Host '<-Start Result->'
-    Write-Host 'STATUS=OK'
-    Write-Host '<-End Result->'
-    exit 0    
+    if ($UptimeDays -gt 5) {
+        schtasks.exe /Create /SC ONCE /TN "Routine Reboot" /TR "shutdown /r /f /t 0" /ST 23:30 /RU "SYSTEM" /F
+        if (-not($?)) {
+            Write-Host "<-Start Result->"
+            Write-Host "STATUS=COMP ERR"
+            Write-Host "<-End Result->"
+            exit 1
+        } else {
+            Write-Host "<-Start Result->"
+            Write-Host "STATUS=EXCEEDED $UptimeDays"
+            Write-Host "<-End Result->"
+            exit 1      # This is not a failure, this is raised to generate a ticket that uptime threshold has exceeded.
+                        # This alert will self-heal on the next check when the $existingTask is identifed.
+        }
+    } else {
+        Write-Host "<-Start Result->"
+        Write-Host "STATUS=$UptimeDays"
+        Write-Host "<-End Result->"
+        exit 0
+    }    
 }
-
