@@ -28,7 +28,9 @@ $UptimeDays = $Uptime.Days
 
 ### U P D A T E   E N D P O I N T   M O N I T E R   U D F ###
 if ( $UptimeDays -gt 5) {
-    schtasks.exe --% /Create /SC ONCE /TN "Routine Reboot" /TR "shutdown /r /f /t 0" /ST 23:30 /F
+    # Testing  Task Creation using /RU Flag as ephemeral task creation with no specified user generated a failure.
+    schtasks.exe /Create /SC ONCE /TN "Routine Reboot" /TR "shutdown /r /f /t 0" /ST 23:30 /RU "SYSTEM" /F
+    #schtasks.exe --% /Create /SC ONCE /TN "Routine Reboot" /TR "shutdown /r /f /t 0" /ST 23:30 /F
     if (-not($?)) {
         Write-Host '<-Start Result->'
         Write-Host 'STATUS=COMP ERROR'
