@@ -11,12 +11,6 @@
 # Which can be configured in your RMM to generate a ticket indicating an issue with the components
 # task registration execution. Not the endpoint iteself.
 
-### P R E V I O U S   T A S K   C L E A N - U P ###
-if (Get-ScheduledTask -TaskName "Routine Reboot" -ErrorAction SilentlyContinue) {
-    Unregister-ScheduledTask -TaskPath "\" -TaskName "Routine Reboot" -Confirm:$false
-}
-
-### C O N V E R T   U P T I M E   T O   D A Y S ###
 $LastBootUpTime = (Get-CimInstance -ClassName Win32_OperatingSystem).LastBootUpTime
 
 if ($LastBootUpTime -isnot [datetime]) {
@@ -26,25 +20,38 @@ if ($LastBootUpTime -isnot [datetime]) {
 $Uptime = (Get-Date) - $LastBootUpTime
 $UptimeDays = $Uptime.Days
 
-### U P D A T E   E N D P O I N T   M O N I T E R   U D F ###
-if ( $UptimeDays -gt 5) {
-    # Testing  Task Creation using /RU Flag as ephemeral task creation with no specified user generated a failure.
+$existingTask = Get-ScheduledTask -TaskName "Routine Reboot" -ErrorAction SilentlyContinue
+
+if ($existingTask) {
+    if ($UptimeDays -gt 5) {
+        Write-Host "<-Start Result->"
+        Write-Host "STATUS=REBOOT SCHEDULED"
+        Write-Host "<-End Result->"
+        exit 0
+    } else {
+        Unregister-ScheduledTask -TaskPath "\" -TaskName "Routine Reboot" -Confirm:$false -ErrorAction SilentlyContinue
+    }
+}
+
+if ($UptimeDays -gt 5) {
     schtasks.exe /Create /SC ONCE /TN "Routine Reboot" /TR "shutdown /r /f /t 0" /ST 23:30 /RU "SYSTEM" /F
-    #schtasks.exe --% /Create /SC ONCE /TN "Routine Reboot" /TR "shutdown /r /f /t 0" /ST 23:30 /F
-    if (-not($?)) {
+    $exitCode = $LASTEXITCODE
+
+    if ($exitCode -ne 0) {
         Write-Host '<-Start Result->'
         Write-Host 'STATUS=COMP ERROR'
         Write-Host '<-End Result->'
-        #exit 1      # Raise ticket with NOC that the task failed to register.
+        exit 1
     } else {
         Write-Host '<-Start Result->'
         Write-Host 'STATUS=EXCEEDED'
         Write-Host '<-End Result->'
-        #exit 0
+        exit 0
     }
 } else {
     Write-Host '<-Start Result->'
-    Write-Host 'STATUS=OK' 
+    Write-Host 'STATUS=OK'
     Write-Host '<-End Result->'
-    #exit 0
+    exit 0    
 }
+
