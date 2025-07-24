@@ -20,7 +20,7 @@ if ($LastBootUpTime -isnot [datetime]) {
 $Uptime = (Get-Date) - $LastBootUpTime
 $UptimeDays = $Uptime.Days
 
-$existingTask = Get-ScheduledTask -TaskName "Routine Reboot" -ErrorAction SilentlyContinue
+$existingTask = schtasks.exe /Query /TN "Routine Reboot" /V /FO LIST
 
 if ($existingTask) {
     if ($UptimeDays -gt 5) {
@@ -29,7 +29,7 @@ if ($existingTask) {
         Write-Host "<-End Result->"
         exit 0
     } else {
-        Unregister-ScheduledTask -TaskPath "\" -TaskName "Routine Reboot" -Confirm:$false -ErrorAction SilentlyContinue
+        schtasks.exe /Delete /TN "Routine Reboot" /F
         if (-not(&?)) {
             Write-Host "<-Start Result->"
             Write-Host "STATUS=COMP ERR"
